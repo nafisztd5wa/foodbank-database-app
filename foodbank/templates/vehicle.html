@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicles</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            font-family: 'Libre Baskerville', serif;
+            background-color: #add8e6;
+            color: #1d3557;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #1d3557;
+        }
+        .form-container, .data-summary, .add-vehicle, .main-page {
+            width: 80%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        label {
+            margin: 5px 0;
+        }
+        input[type="text"], input[type="number"], select {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFDBBB;
+            color: darkorange;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: middle;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>Vehicles</h1>
+
+{% if error_msg %}
+    <p style="color:red;">{{ error_msg }}</p>
+{% endif %}
+
+<div class="form-container">
+    <h5><em>Search transit vehicles by vehicle type, or view summary about each transit vehicle type.</em></h5>
+    <h2>All Vehicles</h2>
+    <form method="GET">
+        <label for="q">Search by vehicle type:</label>
+        <input type="text" id="q" name="q" {% if query == None %} placeholder="Vehicle type..." {%else%} value="{{ query }}" {%endif%}>
+        <button type="submit">Search</button>
+    </form>
+</div>
+
+<div class="form-container">
+    {%if user.is_staff%}
+        <table style="table-layout: fixed;">
+            <thead>
+            <tr>
+                <th>Driver</th>
+                <th>Vehicle Type</th>
+                <th>Total Passenger Capacity</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for vehicle in vehicles %}
+                <tr>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="vehicle_id" value="{{ vehicle.id }}">
+                        <td>
+                            <select name="driver_volunteer">
+                                <option value="" {% if not vehicle.driver_volunteer %} selected {% endif %}>Select Driver</option>
+                                {% for volunteer in volunteers %}
+                                    <option value="{{ volunteer.id }}" {% if vehicle.driver_volunteer_id == volunteer.id %} selected {% endif %}>{{ volunteer.first_name }} {{ volunteer.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><input type="text" name="vehicle_type" value="{{ vehicle.vehicle_type }}"></td>
+                        <td><input type="number" name="total_passenger_capacity" value="{{ vehicle.total_passenger_capacity }}"></td>
+                        <td>
+                            <div class="button-container">
+                                <button type="submit" name="edit">Save Edits</button>
+                                <button type="submit" name="delete">Delete</button>
+                            </div>
+                        </td>
+                    </form>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {%else%}
+        <table style="table-layout: fixed;">
+            <thead>
+            <tr>
+                <th>Driver</th>
+                <th>Vehicle Type</th>
+                <th>Total Passenger Capacity</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for vehicle in vehicles %}
+                <tr>
+                    <td>
+                        {% for volunteer in volunteers %}
+                            {% if vehicle.driver_volunteer_id == volunteer.id %} {{ volunteer.first_name }} {{ volunteer.last_name }} {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>{{ vehicle.vehicle_type }}</td>
+                    <td>{{ vehicle.total_passenger_capacity }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {%endif%}
+</div>
+
+<div class="data-summary">
+    <h2>Data Summary</h2>
+
+    <h4>Number of vehicles of each type and their cumulative passenger capacity</h4>
+    <table style="table-layout: fixed;">
+        <thead>
+        <tr>
+            <th>Vehicle Type</th>
+            <th>Number of Vehicles</th>
+            <th>Cumulative Capacity</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in vehicles_per_type %}
+            <tr>
+                <td>{{ row.vehicle_type }}</td>
+                <td>{{ row.num_vehicles }}</td>
+                <td>{{ row.cum_capacity }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if user.is_staff %}
+    <div class="add-vehicle">
+        <h2>Add Vehicle</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="driver_volunteer">Driver:</label>
+            <select id="driver_volunteer" name="driver_volunteer">
+                <option value="">Select Driver</option>
+                {% for volunteer in volunteers %}
+                    <option value="{{ volunteer.id }}">{{ volunteer.first_name }} {{ volunteer.last_name }}</option>
+                {% endfor %}
+            </select><br>
+            <label for="vehicle_type">Vehicle Type:</label>
+            <input type="text" id="vehicle_type" name="vehicle_type"><br>
+            <label for="total_passenger_capacity">Total Passenger Capacity:</label>
+            <input type="number" id="total_passenger_capacity" name="total_passenger_capacity"><br>
+            <button type="submit" name="add">Add Vehicle</button>
+        </form>
+    </div>
+{%endif%}
+
+<div class="main-page">
+    <h2>Return to Main Page</h2>
+    <button onclick="location.href='{% url 'foodbank:main_page' %}'">Main Page</button>
+</div>
+</body>
+</html>

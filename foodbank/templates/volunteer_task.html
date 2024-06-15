@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volunteer_Tasks</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            font-family: 'Libre Baskerville', serif;
+            background-color: #add8e6;
+            color: #1d3557;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #1d3557;
+        }
+        .form-container, .data-summary, .add-volunteer-task, .main-page {
+            width: 80%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        label {
+            margin: 5px 0;
+        }
+        input[type="text"], select {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFDBBB;
+            color: darkorange;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: middle;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>Volunteer Tasks</h1>
+
+{% if error_msg %}
+    <p style="color:red;">{{ error_msg }}</p>
+{% endif %}
+
+<div class="form-container">
+    <h5><em>Each individual shift, or volunteer task, can be signed up for by one volunteer. Search individual shifts by specifying the volunteer, task description, or city where the shift will take place.</em></h5>
+    <form method="GET">
+        <label for="q">Search by any attribute:</label>
+        <input type="text" id="q" name="q" value="{{ query }}">
+        <button type="submit">Search</button>
+    </form>
+</div>
+
+<div class="form-container">
+    <table style="table-layout: fixed;">
+        <thead>
+        <tr>
+            <th>Volunteer</th>
+            <th>Task</th>
+            <th>Food Bank City</th>
+            {% if user.is_staff %}
+                <th>Action</th>
+            {% endif %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for shift in shifts %}
+            <tr>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="shift_id" value="{{ shift.id }}">
+                    <td>
+                        {% if user.is_staff %}
+                            <select name="volunteer">
+                                {% for volunteer in volunteers %}
+                                    <option value="{{ volunteer.id }}" {% if shift.volunteer_id == volunteer.id %}selected{% endif %}>{{ volunteer.first_name }} {{ volunteer.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            {{ shift.volunteer.first_name }} {{ shift.volunteer.last_name }}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.is_staff %}
+                            <select name="task">
+                                {% for task in tasks %}
+                                    <option value="{{ task.id }}" {% if shift.task_id == task.id %}selected{% endif %}>{{ task.description }} - {{ task.start_date_time|date:"F d, Y h:i A" }} - {{ task.end_date_time|date:"h:i A" }}</option>
+                                {% endfor %}
+                            </select>
+                        {% else %}
+                            {{ shift.task.description }} - {{ shift.task.start_date_time|date:"F d, Y h:i A" }} - {{ shift.task.end_date_time|date:"h:i A" }}
+                        {% endif %}
+                    </td>
+                    <td>{{ shift.task.associated_food_bank.city }}</td>
+                    {% if user.is_staff %}
+                        <td>
+                            <div class="button-group">
+                                <button type="submit" name="save">Save</button>
+                                <button type="submit" formaction="{% url 'foodbank:volunteer_task_delete' %}" name="delete">Delete</button>
+                            </div>
+                        </td>
+                    {% endif %}
+                </form>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="add-volunteer-task">
+    <h2>Add Volunteer Task</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="volunteer">Volunteer:</label>
+        <select id="volunteer" name="volunteer">
+            {% if user.is_staff %}
+                {% for volunteer in volunteers %}
+                    <option value="{{ volunteer.id }}">{{ volunteer.first_name }} {{ volunteer.last_name }}</option>
+                {% endfor %}
+            
+            {% else %}
+                <option value="{{ user_volunteer.id }}">{{ user_volunteer.first_name }} {{ user_volunteer.last_name }}</option>
+            {% endif %}
+
+        </select><br>
+        <label for="task1">Task:</label>
+        <select id="task1" name="task">
+            {% for task in tasks %}
+                <option value="{{ task.id }}">{{ task.description }} - {{ task.start_date_time|date:"F d, Y h:i A" }} - {{ task.end_date_time|date:"h:i A" }}</option>
+            {% endfor %}
+        </select><br>
+        <button type="submit" name="add">Add Volunteer Task</button>
+    </form>
+</div>
+
+<div class="main-page">
+    <h2>Return to Main Page</h2>
+    <button onclick="location.href='{% url 'foodbank:main_page' %}'">Main Page</button>
+</div>
+</body>
+</html>

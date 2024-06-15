@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipient Organizations</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            font-family: 'Libre Baskerville', serif;
+            background-color: #add8e6;
+            color: #1d3557;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #1d3557;
+        }
+        .form-container, .table-container, .add-organization, .main-page {
+            width: 80%;
+            max-width: 1500px;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        label {
+            margin: 5px 0;
+        }
+        input[type="text"], input[type="number"], input[type="datetime-local"], select {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFDBBB;
+            color: darkorange;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: middle;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px; /* Adjust the gap between buttons */
+        }
+    </style>
+</head>
+<body>
+<h1>Recipient Organizations</h1>
+
+<div class="table-container">
+    <h5><em>View recipient organizations' information, including their name, location, and contact details. Add, edit, or delete organizations' information.</em></h5>
+    <table style="table-layout: fixed;">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Street Address</th>
+            <th>City</th>
+            <th>State</th>
+            <th>ZIP Code</th>
+            <th>Phone Number</th>
+            <th>Email</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for organization in recipient_organizations %}
+            <tr>
+                <form method="POST">
+                    {% csrf_token %}
+                    <input type="hidden" name="recipient_organization_id" value="{{ organization.id }}">
+                    <td><input type="text" name="name" value="{{ organization.name }}"></td>
+                    <td><input type="text" name="street_address" value="{{ organization.street_address }}"></td>
+                    <td><input type="text" name="city" value="{{ organization.city }}"></td>
+                    <td><input type="text" name="home_state" value="{{ organization.home_state }}"></td>
+                    <td><input type="text" name="zip_code" value="{{ organization.zip_code }}"></td>
+                    <td><input type="text" name="phone_number" value="{{ organization.phone_number }}"></td>
+                    <td><input type="text" name="email" value="{{ organization.email }}"></td>
+                    <td>
+                        <div class="button-container">
+                            <button type="submit" name="save">Save</button>
+                            <button type="submit" formaction="{% url 'foodbank:recipient_organization_delete' %}" name="delete">Delete</button>
+                        </div>
+                    </td>
+                </form>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="add-organization">
+    <h2>Add Recipient Organization</h2>
+    <form method="POST">
+        {% csrf_token %}
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name"><br>
+        <label for="street_address">Street Address:</label>
+        <input type="text" id="street_address" name="street_address"><br>
+        <label for="city">City:</label>
+        <input type="text" id="city" name="city"><br>
+        <label for="home_state">State:</label>
+        <input type="text" id="home_state" name="home_state"><br>
+        <label for="zip_code">ZIP Code:</label>
+        <input type="text" id="zip_code" name="zip_code"><br>
+        <label for="phone_number">Phone Number:</label>
+        <input type="text" id="phone_number" name="phone_number"><br>
+        <label for="email">Email:</label>
+        <input type="text" id="email" name="email"><br>
+        <button type="submit" name="add">Add Recipient Organization</button>
+    </form>
+</div>
+
+<div class="main-page">
+    <h2>Return to Main Page</h2>
+    <button onclick="location.href='{% url 'foodbank:main_page' %}'">Main Page</button>
+</div>
+
+</body>
+</html>

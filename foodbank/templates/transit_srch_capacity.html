@@ -1,0 +1,121 @@
+{% extends "transit.html" %}
+
+{% block content %}
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Filtered Results</title>
+        <style>
+            @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+            body {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                margin: 0;
+                font-family: 'Libre Baskerville', serif;
+                background-color: #add8e6;
+                color: #1d3557;
+                padding: 20px;
+            }
+            h1 {
+                color: #1d3557;
+            }
+            .form-container {
+                width: 80%;
+                max-width: 1200px;
+                margin-bottom: 20px;
+            }
+            form {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                background-color: rgba(255, 255, 255, 0.8);
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                width: 100%;
+                box-sizing: border-box;
+            }
+            input[type="text"] {
+                padding: 8px;
+                margin-bottom: 10px;
+                border: 1px solid #ccc;
+                border-radius: 5px;
+                font-size: 14px;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            button {
+                margin: 10px 0;
+                padding: 10px 20px;
+                font-size: 14px;
+                cursor: pointer;
+                width: 100%;
+                box-sizing: border-box;
+                border: none;
+                border-radius: 5px;
+                background-color: #FFDBBB;
+                color: darkorange;
+                transition: background-color 0.3s ease, color 0.3s ease;
+            }
+            button:hover {
+                background-color: #0056b3;
+                color: white;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                background-color: rgba(255, 255, 255, 0.8);
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+                border-radius: 10px;
+                overflow: hidden;
+            }
+            th, td {
+                padding: 10px;
+                border: 1px solid #ccc;
+                text-align: left;
+            }
+            th {
+                background-color: #f4f4f4;
+            }
+        </style>
+    </head>
+    <body>
+    <h1>Filtered Results</h1>
+    <div class="form-container">
+        <form method="get" action="{% url 'filter' %}">
+            <input type="text" name="q" placeholder="Search...">
+            <button type="submit">Search</button>
+        </form>
+    </div>
+    <div class="form-container">
+        <table style="table-layout: fixed;">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Capacity</th>
+                <!-- Add other columns as needed -->
+            </tr>
+            </thead>
+            <tbody>
+            {% for entry in entries %}
+                <tr>
+                    <td>{{ entry.name }}</td>
+                    <td>{{ entry.capacity }}</td>
+                    <!-- Add other columns as needed -->
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2">No entries found.</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    </body>
+    </html>
+{% endblock %}

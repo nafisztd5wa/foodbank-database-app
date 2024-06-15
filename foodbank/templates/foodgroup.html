@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Groups</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            font-family: 'Libre Baskerville', serif;
+            background-color: #add8e6;
+            color: #1d3557;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #1d3557;
+        }
+        .form-container, .table-container, .add-foodgroup, .main-page {
+            width: 80%;
+            max-width: 800px;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        label {
+            margin: 5px 0;
+        }
+        input[type="text"] {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFDBBB;
+            color: darkorange;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: middle;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px; /* Adjust the gap between buttons */
+        }
+    </style>
+</head>
+<body>
+<h1>Food Groups</h1>
+
+<div class="table-container">
+    {% if user.is_staff %}
+        <table style="table-layout: fixed;">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for foodgroup in foodgroups %}
+                <tr>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="foodgroup_id" value="{{ foodgroup.id }}">
+                        <td><input type="text" name="name" value="{{ foodgroup.name }}"></td>
+                        <td>
+                            <div class="button-container">
+                                <button type="submit" name="save">Save</button>
+                                <button type="submit" formaction="{% url 'foodbank:foodgroup_delete' %}" name="delete">Delete</button>
+                            </div>
+                        </td>
+                    </form>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <table style="table-layout: fixed;">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for foodgroup in foodgroups %}
+                <tr>
+                    <td>{{ foodgroup.id }}</td>
+                    <td>{{ foodgroup.name }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</div>
+
+{% if user.is_staff %}
+    <div class="add-foodgroup">
+        <h2>Add Food Group</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name"><br>
+            <button type="submit" name="add">Add Food Group</button>
+        </form>
+    </div>
+{% endif %}
+
+<div class="main-page">
+    <h2>Return to Main Page</h2>
+    <button onclick="location.href='{% url 'foodbank:main_page' %}'">Main Page</button>
+</div>
+
+</body>
+</html>

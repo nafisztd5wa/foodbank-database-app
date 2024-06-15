@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Items</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            font-family: 'Libre Baskerville', serif;
+            background-color: #add8e6;
+            color: #1d3557;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #1d3557;
+        }
+        .form-container, .table-container, .add-fooditem, .main-page {
+            width: 80%;
+            max-width: 1300px;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        label {
+            margin: 5px 0;
+        }
+        input[type="text"], input[type="number"], input[type="datetime-local"], input[type="date"], select {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFDBBB;
+            color: darkorange;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: middle;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px; /* Adjust the gap between buttons */
+        }
+    </style>
+</head>
+<body>
+<h1>Food Items</h1>
+
+<div class="table-container">
+    <h5><em>Search donated food items by their name, food group, expiration date, or another characteristic.</em></h5>
+    <h2>All Food Items</h2>
+    <form method="GET">
+        <label for="q">Search by any field:</label>
+        <input type="text" id="q" name="q" {% if query == None %} placeholder="Enter query..." {%else%} value="{{ query }}" {% endif %}>
+        <button type="submit">Search</button>
+    </form>
+
+    {% if user.is_staff %}
+        <table style="table-layout: fixed;">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Food Group</th>
+                <th>Expiration Date</th>
+                <th>Item Size</th>
+                <th>Associated Food Bank</th>
+                <th>Donator</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for fooditem in fooditems %}
+                <tr>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="fooditem_id" value="{{ fooditem.id }}">
+                        <td><input type="text" name="name" value="{{ fooditem.name }}"></td>
+                        <td>
+                            <select name="food_group">
+                                <option value="">Select Food Group</option>
+                                {% for group in food_groups %}
+                                    <option value="{{ group.id }}" {% if fooditem.food_group_id == group.id %} selected {% endif %}>{{ group.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><input type="date" name="expiration_date" value="{{ fooditem.expiration_date|date:'Y-m-d' }}"></td>
+                        <td><input type="text" name="item_size" value="{{ fooditem.item_size }}"></td>
+                        <td>
+                            <select name="associated_food_bank">
+                                <option value="">Select Food Bank</option>
+                                {% for foodbank in foodbanks %}
+                                    <option value="{{ foodbank.id }}" {% if fooditem.associated_food_bank_id == foodbank.id %} selected {% endif %}>{{ foodbank.street_address }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="donator">
+                                <option value="">Select Donator</option>
+                                {% for donator in donators %}
+                                    <option value="{{ donator.id }}" {% if fooditem.donator_id == donator.id %} selected {% endif %}>{{ donator.first_name }} {{ donator.last_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <div class="button-container">
+                                <button type="submit" name="save">Save</button>
+                                <button type="submit" formaction="{% url 'foodbank:fooditem_delete' %}" name="delete">Delete</button>
+                            </div>
+                        </td>
+                    </form>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    {% else %}
+        <table style="table-layout: fixed;">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Food Group</th>
+                <th>Expiration Date</th>
+                <th>Item Size</th>
+                <th>Associated Food Bank</th>
+                <th>Donator</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for fooditem in fooditems %}
+                <tr>
+                    <td>{{ fooditem.name }}</td>
+                    <td>
+                        {% for group in food_groups %}
+                            {% if fooditem.food_group_id == group.id %} {{ group.name }} {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>{{ fooditem.expiration_date|date:'Y-m-d' }}</td>
+                    <td>{{ fooditem.item_size }}</td>
+                    <td>
+                        {% for foodbank in foodbanks %}
+                            {% if fooditem.associated_food_bank_id == foodbank.id %} {{ foodbank.street_address }} {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for donator in donators %}
+                            {% if fooditem.donator_id == donator.id %} {{ donator.first_name }} {{ donator.last_name }} {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {%endif%}
+</div>
+
+{% if user.is_staff %}
+    <div class="add-fooditem">
+        <h2>Add Food Item</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="name">Name:</label>
+            <input type="text" id="name" name="name"><br>
+            <label for="food_group">Food Group:</label>
+            <select id="food_group" name="food_group">
+                <option value="">Select Food Group</option>
+                {% for group in food_groups %}
+                    <option value="{{ group.id }}">{{ group.name }}</option>
+                {% endfor %}
+            </select><br>
+            <label for="expiration_date">Expiration Date:</label>
+            <input type="date" id="expiration_date" name="expiration_date"><br>
+            <label for="item_size">Item Size:</label>
+            <input type="text" id="item_size" name="item_size"><br>
+            <label for="associated_food_bank">Associated Food Bank:</label>
+            <select id="associated_food_bank" name="associated_food_bank">
+                <option value="">Select Food Bank</option>
+                {% for foodbank in foodbanks %}
+                    <option value="{{ foodbank.id }}">{{ foodbank.street_address }}</option>
+                {% endfor %}
+            </select><br>
+            <label for="donator">Donator:</label>
+            <select id="donator" name="donator">
+                <option value="">Select Donator</option>
+                {% for donator in donators %}
+                    <option value="{{ donator.id }}">{{ donator.first_name }} {{ donator.last_name }}</option>
+                {% endfor %}
+            </select><br>
+            <button type="submit" name="add">Add Food Item</button>
+        </form>
+    </div>
+{% endif %}
+
+<div class="main-page">
+    <h2>Return to Main Page</h2>
+    <button onclick="location.href='{% url 'foodbank:main_page' %}'">Main Page</button>
+</div>
+
+</body>
+</html>

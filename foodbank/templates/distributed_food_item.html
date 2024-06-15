@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distributed Food Items</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            font-family: 'Libre Baskerville', serif;
+            background-color: #add8e6;
+            color: #1d3557;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #1d3557;
+        }
+        .form-container, .table-container, .add-item, .main-page {
+            width: 80%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        label {
+            margin: 5px 0;
+        }
+        input[type="text"], input[type="date"], input[type="number"], select {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFDBBB;
+            color: darkorange;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: middle;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .button-container {
+            display: flex;
+            gap: 10px; /* Adjust the gap between buttons */
+        }
+    </style>
+</head>
+<body>
+<h1>Distributed Food Items</h1>
+
+<div class="table-container">
+    <h5><em>View recently distributed food items. Each item corresponds to an item in the Food Items table. These are items that have been distributed, and their recipient organizations are specified.</em></h5>
+    {% if user.is_staff %}
+        <table>
+            <thead>
+            <tr>
+                <th>Food Item</th>
+                <th>Recipient Organization</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in distributed_food_items %}
+                <tr>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="item_id" value="{{ item.id }}">
+                        <td>
+                            <select name="food_item">
+                                {% for food_item in food_items %}
+                                    <option value="{{ food_item.id }}" {% if item.food_item_id == food_item.id %}selected{% endif %}>{{ food_item.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <select name="recipient_organization">
+                                {% for organization in recipient_organizations %}
+                                    <option value="{{ organization.id }}" {% if item.recipient_org_id == organization.id %}selected{% endif %}>{{ organization.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td>
+                            <div class="button-container">
+                                <button type="submit" name="save">Save</button>
+                                <button type="submit" formaction="{% url 'foodbank:distributed_food_item_delete' %}" name="delete">Delete</button>
+                            </div>
+                        </td>
+                    </form>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {%else%}
+        <table>
+            <thead>
+            <tr>
+                <th>Food Item</th>
+                <th>Recipient Organization</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in distributed_food_items %}
+                <tr>
+                    <td>
+                        {% for food_item in food_items %}
+                            {% if item.food_item_id == food_item.id %}{{ food_item.name }}{% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>
+                        {% for organization in recipient_organizations %}
+                            {% if item.recipient_org_id == organization.id %}{{ organization.name }}{% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {%endif%}
+</div>
+
+{% if user.is_staff %}
+    <div class="add-item">
+        <h2>Add Distributed Food Item</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="food_item">Food Item:</label>
+            <select id="food_item" name="food_item">
+                {% for food_item in food_items %}
+                    <option value="{{ food_item.id }}">{{ food_item.name }}</option>
+                {% endfor %}
+            </select><br>
+            <label for="recipient_organization">Recipient Organization:</label>
+            <select id="recipient_organization" name="recipient_organization">
+                {% for organization in recipient_organizations %}
+                    <option value="{{ organization.id }}">{{ organization.name }}</option>
+                {% endfor %}
+            </select><br>
+            <button type="submit" name="add">Add Distributed Food Item</button>
+        </form>
+    </div>
+{%endif%}
+
+<div class="main-page">
+    <h2>Return to Main Page</h2>
+    <button onclick="location.href='{% url 'foodbank:main_page' %}'">Main Page</button>
+</div>
+
+</body>
+</html>

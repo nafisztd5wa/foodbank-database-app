@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasks</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            font-family: 'Libre Baskerville', serif;
+            background-color: #add8e6;
+            color: #1d3557;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #1d3557;
+        }
+        .form-container, .table-container, .add-task, .main-page {
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        label {
+            margin: 5px 0;
+        }
+        input[type="text"], input[type="number"], input[type="datetime-local"], select {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFDBBB;
+            color: darkorange;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: left;
+            word-wrap: break-word;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+    </style>
+</head>
+<body>
+<h1>Tasks</h1>
+
+{% if error_msg %}
+    <p style="color:red;">{{error_msg}}</p>
+{% endif %}
+
+<!-- Vols Per Task -->
+<div class="table-container">
+    <h2>Available Upcoming Tasks</h2>
+    <table style="table-layout: fixed;">
+        <thead>
+        <tr>
+            <th>Task ID</th>
+            <th>Associated Food Bank</th>
+            <th>Description</th>
+            <th>Start Date Time</th>
+            <th>End Date Time</th>
+            <th>Min Volunteers</th>
+            <th>Max Volunteers</th>
+            <th>Vols Currently Signed Up</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in vols_per_task %}
+            <tr>
+                <form method="POST">
+                    {% csrf_token %}
+                    <td>{{ row.t_id }}</td>
+                    <td>
+                        {% for foodbank in foodbanks %}
+                            {% if row.fb_id == foodbank.id %}
+                                {{ foodbank.street_address }}, {{foodbank.city}}, {{foodbank.home_state}}
+                            {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>{{ row.t_descr }}</td>
+                    <td>{{ row.t_start|date:'m-d-Y H:i' }}</td>
+                    <td>{{ row.t_end|date:'m-d-Y H:i' }}</td>
+                    <td>{{ row.t_min }}</td>
+                    <td>{{ row.t_max }}</td>
+                    <td>{{ row.t_cur }}</td>
+                    <td>
+                        <select name="vol_signing_up">
+                            <option value="" selected>Select Volunteer</option>
+                            {% if user.is_staff %}
+
+                                {% for volunteer in volunteers %}
+                                    <option value="{{ volunteer.id }}">{{ volunteer.first_name }} {{ volunteer.last_name }}</option>
+                                {% endfor %}
+                            
+                                {% else %}
+                                <option value="{{ user_volunteer.id }}">{{ user_volunteer.first_name }} {{ user_volunteer.last_name }}</option>
+                                {% endif %}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="hidden" name="task_id" value="{{row.t_id}}">
+                        <button type="submit" name="signup">Sign Up</button>
+                    </td>
+                </form>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- All task entities -->
+<div class="form-container">
+    <h2>All Tasks</h2>
+    <form method="GET">
+        <label for="q">Search by task description:</label>
+        <input type="text" id="q" name="q" {% if query == None %} placeholder="Enter description..." {% else %} value="{{query}}" {% endif %}>
+        <button type="submit">Search</button>
+    </form>
+</div>
+
+{% if user.is_staff %}
+    <div class="table-container">
+        <table style="table-layout: fixed;">
+            <thead>
+            <tr>
+                <th>Task ID</th>
+                <th>Associated Food Bank</th>
+                <th>Description</th>
+                <th>Start Date Time</th>
+                <th>End Date Time</th>
+                <th>Min Volunteers</th>
+                <th>Max Volunteers</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for task in tasks %}
+                <tr>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <td>{{ task.id }}</td>
+                        <td>
+                            <select name="associated_food_bank">
+                                {% for foodbank in foodbanks %}
+                                    <option value="{{ foodbank.id }}" {% if task.associated_food_bank_id == foodbank.id %}selected{% endif %}>{{ foodbank.street_address }}, {{foodbank.city}}, {{foodbank.home_state}}</option>
+                                {% endfor %}
+                            </select>
+                        </td>
+                        <td><input type="text" name="description" value="{{ task.description }}"></td>
+                        <td><input type="datetime-local" name="start_date_time" value="{{ task.start_date_time|date:'Y-m-d\TH:i' }}"></td>
+                        <td><input type="datetime-local" name="end_date_time" value="{{ task.end_date_time|date:'Y-m-d\TH:i' }}"></td>
+                        <td><input type="number" name="min_volunteers" value="{{ task.min_volunteers }}"></td>
+                        <td><input type="number" name="max_volunteers" value="{{ task.max_volunteers }}"></td>
+                        <td>
+                            <input type="hidden" name="task_id" value="{{task.id}}">
+                            <button type="submit" name="edit">Save Edits</button>
+                            <button type="submit" name="delete">Delete</button>
+                        </td>
+                    </form>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+{% else %}
+    <div class="table-container">
+        <table style="table-layout: fixed;">
+            <thead>
+            <tr>
+                <th>Task ID</th>
+                <th>Associated Food Bank</th>
+                <th>Description</th>
+                <th>Start Date Time</th>
+                <th>End Date Time</th>
+                <th>Min Volunteers</th>
+                <th>Max Volunteers</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for task in tasks %}
+                <tr>
+                    <td>{{ task.id }}</td>
+                    <td>
+                        {% for foodbank in foodbanks %}
+                            {% if foodbank.id == task.associated_food_bank_id %}{{ foodbank.street_address }}, {{foodbank.city}}, {{foodbank.home_state}} {% endif %}
+                        {% endfor %}
+                    </td>
+                    <td>{{ task.description }}</td>
+                    <td>{{ task.start_date_time|date:'Y-m-d H:i' }}</td>
+                    <td>{{ task.end_date_time|date:'Y-m-d H:i' }}</td>
+                    <td>{{ task.min_volunteers }}</td>
+                    <td>{{ task.max_volunteers }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endif %}
+
+{% if user.is_staff %}
+    <div class="add-task">
+        <h2>Add Task</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description"><br>
+            <label for="start_date_time">Start Date Time:</label>
+            <input type="datetime-local" id="start_date_time" name="start_date_time"><br>
+            <label for="end_date_time">End Date Time:</label>
+            <input type="datetime-local" id="end_date_time" name="end_date_time"><br>
+            <label for="associated_food_bank">Associated Food Bank:</label>
+            <select id="associated_food_bank" name="associated_food_bank">
+                {% for foodbank in foodbanks %}
+                    <option value="{{ foodbank.id }}">{{ foodbank.street_address }}</option>
+                {% endfor %}
+            </select><br>
+            <label for="min_volunteers">Min Volunteers:</label>
+            <input type="number" id="min_volunteers" name="min_volunteers"><br>
+            <label for="max_volunteers">Max Volunteers:</label>
+            <input type="number" id="max_volunteers" name="max_volunteers"><br>
+            <button type="submit" name="add">Add Task</button>
+        </form>
+    </div>
+{% endif %}
+
+<div class="main-page">
+    <h2>Return to Main Page</h2>
+    <button><a href="{% url 'foodbank:main_page' %}" style="text-decoration: none; color: inherit;">Main Page</a></button>
+</div>
+</body>
+</html>

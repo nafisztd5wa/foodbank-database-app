@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Banks</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            font-family: 'Libre Baskerville', serif;
+            background-color: #add8e6;
+            color: #1d3557;
+            padding: 20px;
+        }
+        h1, h2, h4 {
+            color: #1d3557;
+        }
+        .form-container, .table-container, .data-summary, .add-foodbank, .main-page {
+            width: 80%;
+            max-width: 1600px;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        label {
+            margin: 5px 0;
+        }
+        input[type="text"], input[type="email"], input[type="date"], select {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFDBBB;
+            color: darkorange;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: middle;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+        .button-group {
+            display: flex;
+        }
+        .button-group button {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>Food Banks</h1>
+
+{% if error_msg %}
+    <p style="color:red;">{{error_msg}}</p>
+{% endif %}
+
+<div class="table-container">
+<h5><em>Search for food banks by their address or contact information, and view the number of food banks in each city.</em></h5>
+    <h2>All Food Banks</h2>
+    {% if user.is_staff %}
+        <form method="GET">
+            <label for="q">Search by any address, city, state, zip, phone, or email:</label>
+            <input type="text" id="q" name="q" {% if query == None %} placeholder="Enter text..." {%else%} value="{{ query }}" {%endif%}>
+            <button type="submit">Search</button>
+        </form>
+        <table>
+            <thead>
+            <tr>
+                <th>Street Address</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Zip Code</th>
+                <th>Manager</th>
+                <th>Phone Number</th>
+                <th>Email</th>
+                <th>Action</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for foodbank in foodbanks %}
+                <tr>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="foodbank_id" value="{{ foodbank.id }}">
+                        <td><input type="text" name="street_address" value="{{ foodbank.street_address }}"></td>
+                        <td><input type="text" name="city" value="{{ foodbank.city }}"></td>
+                        <td><input type="text" name="home_state" value="{{ foodbank.home_state }}"></td>
+                        <td><input type="text" name="zip_code" value="{{ foodbank.zip_code }}"></td>
+
+                        <td><select name="manager">
+                            <option value="" {% if not foodbank.manager %} selected {% endif %}>Select Manager</option>
+                            {% for volunteer in potential_managers %}
+                                <option value="{{ volunteer.id }}" {% if foodbank.manager.id == volunteer.id %} selected {% endif %}>{{ volunteer.first_name }} {{ volunteer.last_name }}</option>
+                            {% endfor %}
+                        </select></td>
+
+                        <td><input type="text" name="phone_number" value="{{ foodbank.phone_number }}"></td>
+                        <td><input type="text" name="email" value="{{ foodbank.email }}"></td>
+                        <td class="button-group">
+                            <button type="submit" name="edit">Save Edits</button>
+                            <button type="submit" name="delete">Delete</button>
+                        </td>
+                    </form>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+    {%else%}
+        <form method="GET">
+        <label for="q">Search by any address, city, state, zip, phone, or email:</label>
+        <input type="text" id="q" name="q" {% if query == None %} placeholder="Enter text..." {%else%} value="{{ query }}" {%endif%}>
+        <button type="submit">Search</button>
+    </form>
+        <table>
+            <thead>
+            <tr>
+                <th>Street Address</th>
+                <th>City</th>
+                <th>State</th>
+                <th>Zip Code</th>
+                <th>Manager</th>
+                <th>Phone Number</th>
+                <th>Email</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for foodbank in foodbanks %}
+                <tr>
+                    <td>{{ foodbank.street_address }}</td>
+                    <td>{{ foodbank.city }}</td>
+                    <td>{{ foodbank.home_state }}</td>
+                    <td>{{ foodbank.zip_code }}</td>
+
+                    <td>
+                        {% for volunteer in potential_managers %}
+                            {% if foodbank.manager.id == volunteer.id %} {{ volunteer.first_name }} {{ volunteer.last_name }} {% endif %}
+                        {% endfor %}
+                    </td>
+
+                    <td>{{ foodbank.phone_number }}</td>
+                    <td>{{ foodbank.email }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {%endif%}
+</div>
+
+<div class="data-summary">
+    <h2>Data Summary</h2>
+    <h4>Number of Food Banks per City</h4>
+    <table>
+        <thead>
+        <tr>
+            <th>City</th>
+            <th>Number of Food Banks</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in food_bank_count_by_city %}
+            <tr>
+                <td>{{row.city}}</td>
+                <td>{{row.NumFoodBanks}}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if user.is_staff %}
+    <div class="add-foodbank">
+        <h2>Add Food Bank</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="street_address">Street Address:</label>
+            <input type="text" id="street_address" name="street_address"><br>
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city"><br>
+            <label for="home_state">State:</label>
+            <input type="text" id="home_state" name="home_state"><br>
+            <label for="zip_code">Zip Code:</label>
+            <input type="text" id="zip_code" name="zip_code"><br>
+
+            <label for="manager">Manger:</label>
+            <select id="manager" name="manager">
+                <option value="">Select Manager</option>
+                {% for volunteer in potential_managers %}
+                    <option value="{{ volunteer.id }}">{{ volunteer.first_name }} {{ volunteer.last_name }}</option>
+                {% endfor %}
+            </select><br>
+
+            <label for="phone_number">Phone Number:</label>
+            <input type="text" id="phone_number" name="phone_number"><br>
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email"><br>
+            <button type="submit" name="add">Add Food Bank</button>
+        </form>
+    </div>
+{% endif %}
+
+<div class="main-page">
+    <h2>Return to Main Page</h2>
+    <button onclick="location.href='{% url 'foodbank:main_page' %}'">Main Page</button>
+</div>
+
+</body>
+
+</html>

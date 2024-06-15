@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transit Schedules</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            font-family: 'Libre Baskerville', serif;
+            background-color: #add8e6;
+            color: #1d3557;
+            padding: 20px;
+        }
+        h1, h2 {
+            color: #1d3557;
+        }
+        .form-container, .table-container, .add-transit, .main-page {
+            width: 80%;
+            max-width: 1200px;
+            margin-bottom: 20px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            box-sizing: border-box;
+        }
+        label {
+            margin: 5px 0;
+        }
+        input[type="text"], input[type="number"], input[type="datetime-local"], select {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFDBBB;
+            color: darkorange;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: middle;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+<h1>Transit Schedules</h1>
+
+{% if error_msg %}
+    <p style="color:red;">{{error_msg}}</p>
+{% endif %}
+
+<div class="table-container">
+    <h5><em>View details of recent transits to the food bank, or sign up for an open seat to get transported to the food bank today.</em></h5>
+    <h2>Available Transits for Today</h2>
+    <table style="table-layout: fixed;">
+        <thead>
+        <tr>
+            <th>Transit ID</th>
+            <th>Driver</th>
+            <th>Vehicle Type</th>
+            <th>Remaining Capacity</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for row in transits_today %}
+            <tr>
+                <td>{{ row.ts_id }}</td>
+                <td>{{ row.first_name }} {{ row.vehicle_id.last_name }}</td>
+                <td>{{ row.vehicle_type }}</td>
+                <td>{{ row.current_available_capacity }}</td>
+                <td>
+                    <form method="POST">
+                        {% csrf_token %}
+                        <input type="hidden" name="transit_id" value="{{ row.ts_id }}">
+                        <button type="submit" name="join">Join Transit</button>
+                    </form>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="form-container">
+    <h2>All Transit Schedules</h2>
+    <form method="GET">
+        <label for="q">Filter by available capacity:</label>
+        <input type="text" id="q" name="q" {% if query == None %} placeholder="Enter capacity..." {% else %} value="{{ query }}" {% endif %}>
+        <button type="submit" formaction="{% url 'foodbank:transits' %}">Search</button>
+    </form>
+</div>
+
+<div class="table-container">
+    <table style="table-layout: fixed;">
+        <thead>
+        <tr>
+            <th>Transit Schedule ID</th>
+            <th>Vehicle</th>
+            <th>Arrival Time</th>
+            <th>Departure Time</th>
+            <th>Current Available Capacity</th>
+            {% if user.is_staff %}
+                <th>Action</th>
+            {% endif %}
+        </tr>
+        </thead>
+        <tbody>
+        {% for transit_schedule in transits %}
+            <tr>
+                <form method="POST">
+                    {% csrf_token %}
+                    <td>{{ transit_schedule.id }}</td>
+                    <td>
+                        <select name="vehicle" {% if not user.is_staff %} disabled {% endif %}>
+                            <option value="" {% if not transit_schedule.vehicle %} selected {% endif %}>Select Vehicle</option>
+                            {% for vehicle in vehicles %}
+                                <option value="{{ vehicle.id }}" {% if transit_schedule.vehicle_id == vehicle.id %} selected {% endif %}>{{ vehicle.driver_volunteer.first_name }} {{ vehicle.driver_volunteer.last_name }} - {{ vehicle.vehicle_type }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td><input type="datetime-local" name="arrival_date_time" {% if not user.is_staff %} readonly {% endif %} value="{{ transit_schedule.arrival_date_time|date:'Y-m-d\TH:i' }}"></td>
+                    <td><input type="datetime-local" name="departure_date_time" {% if not user.is_staff %} readonly {% endif %} value="{{ transit_schedule.departure_date_time|date:'Y-m-d\TH:i' }}"></td>
+                    <td><input type="number" name="current_available_capacity" {% if not user.is_staff %} readonly {% endif %} value="{{ transit_schedule.current_available_capacity }}"></td>
+                    {% if user.is_staff %}
+                        <td>
+                            <input type="hidden" name="transit_id" value="{{ transit_schedule.id }}">
+                            <div class="button-group">
+                                <button type="submit" name="edit">Save Edits</button>
+                                <button type="submit" name="delete">Delete</button>
+                            </div>
+                        </td>
+                    {% endif %}
+                </form>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if user.is_staff %}
+    <div class="add-transit">
+        <h2>Add Transit Schedule</h2>
+        <form method="POST">
+            {% csrf_token %}
+            <label for="vehicle">Vehicle:</label>
+            <select id="vehicle" name="vehicle">
+                <option value="">Select Vehicle</option>
+                {% for vehicle in vehicles %}
+                    <option value="{{ vehicle.id }}">{{ vehicle.driver_volunteer.first_name }} {{ vehicle.driver_volunteer.last_name }} - {{ vehicle.vehicle_type }}</option>
+                {% endfor %}
+            </select><br>
+            <label for="arrival_date_time">Arrival Time:</label>
+            <input type="datetime-local" id="arrival_date_time" name="arrival_date_time"><br>
+            <label for="departure_date_time">Departure Time:</label>
+            <input type="datetime-local" id="departure_date_time" name="departure_date_time"><br>
+            <label for="current_available_capacity">Current Available Capacity:</label>
+            <input type="number" id="current_available_capacity" name="current_available_capacity"><br>
+            <button type="submit" name="add">Add Transit Schedule</button>
+        </form>
+    </div>
+{%endif%}
+
+<div class="main-page">
+    <h2>Return to Main Page</h2>
+    <button onclick="location.href='{% url 'foodbank:main_page' %}'">Main Page</button>
+</div>
+</body>
+</html>

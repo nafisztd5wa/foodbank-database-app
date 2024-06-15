@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Foodbank Home</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 150vh;
+            margin: 0;
+            font-family: 'Libre Baskerville', serif;
+            background-color: #add8e6;
+        }
+        .header {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #1d3557;
+            text-align: center;
+        }
+        .form-container {
+            display: flex;
+            justify-content: center;
+            width: 80%;
+        }
+        .form-box {
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin: 0 10px;
+            width: 300px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .form-box label {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #333;
+            display: block;
+        }
+        .form-box input {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+            width: calc(100% - 16px);
+            box-sizing: border-box;
+        }
+        .form-box button {
+            margin: 10px 0;
+            padding: 10px 20px;
+            font-size: 14px;
+            cursor: pointer;
+            width: 100%;
+            box-sizing: border-box;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFDBBB;
+            color: darkorange;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .form-box button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+
+        .header {
+            padding-top: 5%;
+        }
+    </style>
+</head>
+<body>
+<div class="header">Welcome to the Foodbank Home Page</div>
+{% if error_msg %}
+    <p style="color: red;">{{ error_msg }}</p>
+{% endif %}
+
+<div class="form-container">
+    <div class="form-box">
+        <h2>Login</h2>
+        <form method="post" action="{% url 'foodbank:login' %}">
+            {% csrf_token %}
+            <label for="username">Username:</label>
+            <input type="text" id="user" name="username">
+            <label for="password">Password:</label>
+            <input type="password" id="pass" name="password">
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <div class="form-box">
+        <h2>Sign Up</h2>
+        <form method="post" action="{% url 'foodbank:sign_up' %}">
+            {% csrf_token %}
+            <label for="first_name">First Name:</label>
+            <input type="text" id="first_name" name="first_name">
+            <label for="last_name">Last Name:</label>
+            <input type="text" id="last_name" name="last_name">
+            <label for="email">Email:</label>
+            <input type="text" id="email" name="email">
+            <label for="phone_number">Phone Number:</label>
+            <input type="text" id="phone_number" name="phone_number">
+            <label for="street_address">Street Address:</label>
+            <input type="text" id="street_address" name="street_address">
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city">
+            <label for="home_state">State:</label>
+            <input type="text" id="home_state" name="home_state">
+            <label for="zip_code">Zip Code:</label>
+            <input type="text" id="zip_code" name="zip_code">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password">
+            <button type="submit">Sign Up</button>
+        </form>
+    </div>
+
+    <div class="form-box">
+    <h2>Staff Login</h2>
+    <form method="get" action="{% url 'foodbank:staff_login' %}">
+        <button type="submit">Staff Login</button>
+    </form>
+</div>
+
+</div>
+</body>
+</html>

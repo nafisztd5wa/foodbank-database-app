@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Foodbank Main Page</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Libre+Baskerville:wght@400;700&display=swap');
+
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: 'Libre Baskerville', serif;
+            background-color: #add8e6;
+        }
+        .header {
+            font-size: 36px;
+            margin-bottom: 20px;
+            color: #1d3557;
+            text-align: center;
+        }
+        .subheader {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #ffffff;
+            text-align: center;
+        }
+        .button-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 80%;
+        }
+        .button-container button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: calc(33.33% - 20px);
+            box-sizing: border-box;
+            border: none;
+            border-radius: 5px;
+            background-color: #FFDBBB;
+            color: darkred;
+            transition: background-color 0.3s ease;
+        }
+        .button-container button:hover {
+            background-color: #0056b3;
+            color: white;
+        }
+
+        .button-container .logout-button {
+            background-color: darkorange;
+            color: #FFDBBB;
+            font-weight: bold;
+            border: none;
+        }
+        .button-container .db-setup-button {
+            background-color: darkorange;
+            color: #FFDBBB;
+            font-weight: bold;
+            border: none;
+        }
+        .button-container .logout-button:hover {
+            background-color: #0056b3;
+            color: white;
+            border: none;
+        }
+
+        a:link {
+            text-decoration: none;
+            color: darkorange;
+        }
+        a:visited {
+            text-decoration: none;
+            color: darkorange;
+        }
+        a:hover {
+            text-decoration: none;
+            color: darkorange;
+        }
+        a:active {
+            text-decoration: none;
+            color: darkorange;
+        }
+
+        button .disabled {
+            background-color: darkgray;
+            color: lightgrey;
+        }
+    </style>
+</head>
+<body>
+<div class="header">Foodbank Management System</div>
+<div class="subheader">Welcome to the Foodbank Main Page</div>
+{% if msg %} <div class="subheader" style="color: green;">{{ msg }}</div> {% endif %}
+<div class="button-container">
+    <button onclick="location.href='{% url 'foodbank:volunteers' %}'" {% if user.is_staff == False %} disabled style="background-color: darkgray; color: lightgrey;" {% endif %}>Volunteer</button>
+    <button onclick="location.href='{% url 'foodbank:vehicles' %}'">Vehicles</button>
+    <button onclick="location.href='{% url 'foodbank:transits' %}'">Transit Schedules</button>
+    <button onclick="location.href='{% url 'foodbank:volunteer_tasks' %}'">Individual Shifts</button>
+    <button onclick="location.href='{% url 'foodbank:tasks' %}'">Tasks</button>
+    <button onclick="location.href='{% url 'foodbank:foodbanks' %}'">Food Banks</button>
+    <button onclick="location.href='{% url 'foodbank:fooditems' %}'">Food Items</button>
+    <button onclick="location.href='{% url 'foodbank:foodgroups' %}'">Food Groups</button>
+    <button onclick="location.href='{% url 'foodbank:donators' %}'" {% if user.is_staff == False %} disabled style="background-color: darkgray; color: lightgrey;" {% endif %}>Donators</button>
+    <button onclick="location.href='{% url 'foodbank:distributed_food_items' %}'">Distributed Food Items</button>
+    <button onclick="location.href='{% url 'foodbank:recipient_organizations' %}'" {% if user.is_staff == False %} disabled style="background-color: darkgray; color: lightgrey;" {% endif %}>Recipient Organizations</button>
+    <button class="logout-button" onclick="location.href='{% url 'foodbank:logout' %}'">Logout</button>
+    {% if dbSetupComplete == False %}<button class="db-setup-button" onclick="clicked(event)">Setup DB</button> {% endif %}
+</div>
+{% if user.is_staff == False %}
+    <div class="small-message">Please ignore the greyed out buttons, they are for staff only.</div>
+{% endif %}
+
+
+</body>
+<script>
+    function clicked(e)
+    {
+        if(!confirm('This will fill the DB with sample entities. Only do this once, even amongst users and sessions! This is for testing purposes only. Select OK to continue.')) {
+            e.preventDefault();
+        } else {
+            window.location.href = "{% url 'foodbank:setup_db' %}";
+        }
+    }
+</script>
+</html>
